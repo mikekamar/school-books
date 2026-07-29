@@ -1,0 +1,691 @@
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Head, Link, useForm, router } from "@inertiajs/react";
+import { useState } from "react";
+
+export default function Show({ auth, dispatch, stats, fieldAgents, subCounties }) {
+    const [search, setSearch] = useState("");
+    const [selectedSchools, setSelectedSchools] = useState([]);
+    const [selectedSubCounty, setSelectedSubCounty] = useState("");
+
+    const handleSelectAll = (checked) => {
+    if (checked) {
+        setSelectedSchools(dispatch.items.map(item => item.id));
+    } else {
+        setSelectedSchools([]);
+    }
+    };
+
+    const toggleSchool = (id) => {
+        if (selectedSchools.includes(id)) {
+            setSelectedSchools(selectedSchools.filter(x => x !== id));
+        } else {
+            setSelectedSchools([...selectedSchools, id]);
+        }
+    };
+
+    const markSelectedDelivered = () => {
+    if (selectedSchools.length === 0) {
+        alert('Please select at least one school.');
+        return;
+    }
+
+
+    if (!confirm(`Mark ${selectedSchools.length} schools as delivered?`)) {
+        return;
+    }
+
+    router.post(route('dispatch-items.bulk-deliver'), {
+        items: selectedSchools,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            setSelectedSchools([]);
+        },
+    });
+    };
+
+   
+
+    const filteredItems = dispatch.items.filter((item) => {
+
+    const term = search.toLowerCase().trim();
+
+    const school = item.school.school_name?.toLowerCase() || "";
+    const subCounty = item.school.sub_county?.toLowerCase() || "";
+    const uic = item.school.uic?.toString().toLowerCase() || "";
+
+    // Search filter
+    const matchesSearch =
+        school.includes(term) ||
+        subCounty.includes(term) ||
+        uic.includes(term);
+
+    // Sub County dropdown filter
+    const matchesSubCounty =
+        selectedSubCounty === "" ||
+        item.school.sub_county_id == selectedSubCounty;
+
+    return matchesSearch && matchesSubCounty;
+
+});
+    const badgeClass = (status) => {
+        switch (status) {
+            case "Delivered":
+                return "bg-green-100 text-green-700";
+            default:
+                return "bg-yellow-100 text-yellow-700";
+        }
+    };
+
+    const [selectedItem, setSelectedItem] = useState(null);
+
+    const { data, setData, patch, processing, reset } = useForm({
+        receiver_name: '',
+        receiver_phone: '',
+        remarks: '',
+    });
+
+    const openDeliveryModal = (item) => {
+        setSelectedItem(item);
+
+        reset();
+
+        setData({
+            receiver_name: '',
+            receiver_phone: '',
+            remarks: '',
+        });
+    };
+
+    const submitDelivery = (e) => {
+    e.preventDefault();
+
+    patch(route('dispatch-items.deliver', selectedItem.id), {
+        preserveScroll: true,
+
+        onSuccess: () => {
+            setSelectedItem(null);
+            reset();
+        },
+        });
+    };
+    
+    const {
+    data: assignData,
+    setData: setAssignData,
+    post,
+    processing: assignProcessing,
+    } = useForm({
+        sub_county_id: '',
+        field_agent_id: '',
+    });
+
+    const assignSubCounty = () => {
+
+    if (!selectedSubCounty) {
+        alert("Please select a sub county.");
+        return;
+    }
+
+    if (!assignData.field_agent_id) {
+        alert("Please select a field agent.");
+        return;
+    }
+
+    setAssignData("sub_county_id", selectedSubCounty);
+
+    post(route("dispatches.assignSubCounty", dispatch.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            alert("Schools assigned successfully.");
+        },
+    });
+};
+
+    return (
+        <AuthenticatedLayout
+            user={auth.user}
+            header={
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800">
+                            Dispatch Details
+                        </h2>
+
+                        <p className="text-sm text-gray-500 mt-1">
+                            {dispatch.dispatch_number}
+                        </p>
+                    </div>
+
+                    <Link
+                        href={route("dispatches.index")}
+                        className="rounded-md bg-gray-200 px-4 py-2 text-sm hover:bg-gray-300"
+                    >
+                        Back
+                    </Link>
+                </div>
+            }
+        >
+            <Head title={dispatch.dispatch_number} />
+
+            <div className="py-8">
+                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+
+                    {/* Dispatch Information */}
+
+                    <div className="rounded-lg bg-white shadow p-6">
+
+                        <h3 className="text-lg font-semibold mb-4">
+                            Dispatch Information
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                            <div>
+                                <span className="font-semibold">
+                                    Dispatch Number:
+                                </span>
+                                <br />
+                                {dispatch.dispatch_number}
+                            </div>
+
+                            <div>
+                                <span className="font-semibold">
+                                    County:
+                                </span>
+                                <br />
+                                {dispatch.county.name}
+                            </div>
+
+                            <div>
+                                <span className="font-semibold">
+                                    Field Agent:
+                                </span>
+                                <br />
+                                {dispatch.field_agent.name}
+                            </div>
+
+                            <div>
+                                <span className="font-semibold">
+                                    Dispatch Date:
+                                </span>
+                                <br />
+                                {dispatch.dispatch_date}
+                            </div>
+
+                            <div>
+                                <span className="font-semibold">
+                                    Created By:
+                                </span>
+                                <br />
+                                {dispatch.creator.name}
+                            </div>
+
+                            <div>
+                                <span className="font-semibold">
+                                    Status:
+                                </span>
+                                <br />
+                                {dispatch.status}
+                            </div>
+
+                        </div>
+
+                        {dispatch.remarks && (
+
+                            <div className="mt-5">
+
+                                <span className="font-semibold">
+                                    Remarks
+                                </span>
+
+                                <p className="mt-2 text-gray-600">
+                                    {dispatch.remarks}
+                                </p>
+
+                            </div>
+
+                        )}
+
+                    </div>
+
+                    {/* Statistics */}
+
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+                        <div className="rounded-lg bg-white shadow p-5">
+
+                            <p className="text-gray-500 text-sm">
+                                Total Schools
+                            </p>
+
+                            <h2 className="text-3xl font-bold">
+                                {stats.total}
+                            </h2>
+
+                        </div>
+
+                        <div className="rounded-lg bg-white shadow p-5">
+
+                            <p className="text-gray-500 text-sm">
+                                Delivered
+                            </p>
+
+                            <h2 className="text-3xl font-bold text-green-600">
+                                {stats.delivered}
+                            </h2>
+
+                        </div>
+
+                        <div className="rounded-lg bg-white shadow p-5">
+
+                            <p className="text-gray-500 text-sm">
+                                Pending
+                            </p>
+
+                            <h2 className="text-3xl font-bold text-yellow-600">
+                                {stats.pending}
+                            </h2>
+
+                        </div>
+
+                        <div className="rounded-lg bg-white shadow p-5">
+
+                            <p className="text-gray-500 text-sm">
+                                Progress
+                            </p>
+
+                            <h2 className="text-3xl font-bold text-blue-600">
+                                {stats.progress}%
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                    {/* Progress Bar */}
+
+                    <div className="rounded-lg bg-white shadow p-6">
+
+                        <div className="flex justify-between mb-2">
+
+                            <span className="font-semibold">
+                                Dispatch Progress
+                            </span>
+
+                            <span>{stats.progress}%</span>
+
+                        </div>
+
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+
+                            <div
+                                className="bg-green-600 h-3 rounded-full"
+                                style={{
+                                    width: `${stats.progress}%`,
+                                }}
+                            />
+
+                        </div>
+
+                    </div>
+
+                    {/* Search */}
+
+                    <div className="rounded-lg bg-white shadow p-6">
+
+                        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
+        {/* Search */}
+        <div className="w-full lg:max-w-md">
+            <input
+                type="text"
+                placeholder="Search school..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+            />
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-4">
+
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                <input
+                    type="checkbox"
+                    checked={
+                        dispatch.items.length > 0 &&
+                        selectedSchools.length === dispatch.items.length
+                    }
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+
+                <span className="text-sm font-medium text-gray-700">
+                    Select All Schools
+                </span>
+            </label>
+
+            <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">
+                Selected: {selectedSchools.length}
+            </span>
+
+            <button
+                onClick={markSelectedDelivered}
+                disabled={selectedSchools.length === 0}
+                className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition
+                    ${
+                        selectedSchools.length === 0
+                            ? 'cursor-not-allowed bg-gray-300 text-gray-500'
+                            : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
+            >
+                ✓ Mark Selected as Delivered
+            </button>
+
+        </div>
+    </div>
+</div>
+
+                        <div className="overflow-x-auto">
+
+                        <div className="bg-white rounded-lg shadow p-6 mb-6">
+
+    <h2 className="text-lg font-semibold mb-4">
+        Assign Sub County
+    </h2>
+
+    <div className="grid grid-cols-3 gap-4">
+
+        <div>
+            <label className="block text-sm font-medium mb-2">
+                Sub County
+            </label>
+
+            <select
+                value={selectedSubCounty}
+                onChange={(e) => setSelectedSubCounty(e.target.value)}
+                className="w-full border rounded-lg p-2"
+            >
+                <option value="">All Sub Counties</option>
+
+                {subCounties.map((subCounty) => (
+                    <option
+                        key={subCounty.id}
+                        value={subCounty.id}
+                    >
+                        {subCounty.name}
+                    </option>
+                ))}
+            </select>
+        </div>
+
+        <div>
+            <label className="block text-sm font-medium mb-2">
+                Field Agent
+            </label>
+
+            <select
+                value={assignData.field_agent_id}
+                onChange={(e) =>
+                    setAssignData('field_agent_id', e.target.value)
+                }
+                className="w-full border rounded-lg"
+            >
+                <option value="">
+                    Select Agent
+                </option>
+
+                {fieldAgents.map((agent) => (
+                    <option
+                        key={agent.id}
+                        value={agent.id}
+                    >
+                        {agent.name}
+                    </option>
+                ))}
+            </select>
+        </div>
+
+        <div className="flex items-end">
+
+            <button
+                onClick={assignSubCounty}
+                disabled={assignProcessing}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+            >
+                Assign Schools
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+                            <table className="min-w-full divide-y divide-gray-200">
+
+                                <thead className="bg-gray-50">
+
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            Selected
+                                        </th>
+
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            School
+                                        </th>
+
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            UIC
+                                        </th>
+
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            Sub County
+                                        </th>
+
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            Assigned To
+                                        </th>
+
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            Status
+                                        </th>
+
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                            Delivered At
+                                        </th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold">
+                                                Action
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody className="divide-y divide-gray-200 bg-white">
+
+                                    {filteredItems.length > 0 ? (
+
+                                        filteredItems.map((item) => (
+
+                                            <tr key={item.id}>
+
+                                                <td className="px-4 py-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedSchools.includes(item.id)}
+                                                        onChange={() => toggleSchool(item.id)}
+                                                    />
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {item.school.school_name}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {item.school.uic}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {item.school.sub_county}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+                                                    {item.assignee ? item.assignee.name : "Unassigned"}
+                                                </td>
+
+                                                <td className="px-4 py-3">
+
+                                                    <span
+                                                        className={`rounded-full px-3 py-1 text-sm font-medium ${badgeClass(
+                                                            item.status
+                                                        )}`}
+                                                    >
+                                                        {item.status}
+                                                    </span>
+
+                                                </td>
+
+                                                <td className="px-4 py-3">
+
+                                                    {item.delivered_at
+                                                        ? item.delivered_at
+                                                        : "-"}
+
+                                                </td>
+
+                                                <td className="border px-4 py-2 text-center">
+
+                                                    {item.status === 'Pending' ? (
+
+                                                        <button
+                                                            onClick={() => openDeliveryModal(item)}
+                                                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
+                                                        >
+                                                            Deliver
+                                                        </button>
+
+                                                    ) : (
+
+                                                        <span className="text-green-600 font-semibold">
+                                                            ✓ Delivered
+                                                        </span>
+
+                                                    )}
+
+                                                </td>
+
+                                            </tr>
+
+                                        ))
+
+                                    ) : (
+
+                                        <tr>
+
+                                            <td
+                                                colSpan="5"
+                                                className="px-4 py-6 text-center text-gray-500"
+                                            >
+                                                No schools found.
+                                            </td>
+
+                                        </tr>
+
+                                    )}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            {selectedItem && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+    <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+
+        <h2 className="text-xl font-bold mb-4">
+            Confirm Delivery
+        </h2>
+
+        <form onSubmit={submitDelivery}>
+
+            <div className="mb-4">
+                <label className="block mb-1">
+                    Receiver Name
+                </label>
+
+                <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    value={data.receiver_name}
+                    onChange={(e)=>setData('receiver_name',e.target.value)}
+                    required
+                />
+            </div>
+
+            <div className="mb-4">
+                <label className="block mb-1">
+                    Phone
+                </label>
+
+                <input
+                    type="text"
+                    className="w-full border rounded p-2"
+                    value={data.receiver_phone}
+                    onChange={(e)=>setData('receiver_phone',e.target.value)}
+                />
+            </div>
+
+            <div className="mb-4">
+                <label className="block mb-1">
+                    Remarks
+                </label>
+
+                <textarea
+                    className="w-full border rounded p-2"
+                    rows="3"
+                    value={data.remarks}
+                    onChange={(e)=>setData('remarks',e.target.value)}
+                />
+            </div>
+
+            <div className="flex justify-end gap-3">
+
+                <button
+                    type="button"
+                    onClick={()=>setSelectedItem(null)}
+                    className="px-4 py-2 bg-gray-500 text-white rounded"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="px-4 py-2 bg-green-600 text-white rounded"
+                >
+                    Confirm Delivery
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+)}
+        </AuthenticatedLayout>
+    );
+}
