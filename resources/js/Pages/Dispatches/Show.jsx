@@ -330,6 +330,89 @@ export default function Show({ auth, dispatch, stats, fieldAgents, subCounties }
 
                     </div>
 
+                    {/* Search */}
+
+<div className="rounded-lg bg-white shadow p-6">
+
+<div className="overflow-x-auto">
+
+    <div className="bg-white rounded-lg shadow p-6 mb-6">
+
+        <h2 className="text-lg font-semibold mb-4">
+            Assign Sub County
+        </h2>
+
+        <div className="grid grid-cols-3 gap-4">
+
+            <div>
+                <label className="block text-sm font-medium mb-2">
+                    Sub County
+                </label>
+
+                <select
+                    value={selectedSubCounty}
+                    onChange={(e) => setSelectedSubCounty(e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                >
+                    <option value="">All Sub Counties</option>
+
+                    {subCounties.map((subCounty) => (
+                        <option
+                            key={subCounty.id}
+                            value={subCounty.id}
+                        >
+                            {subCounty.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium mb-2">
+                    Field Agent
+                </label>
+
+                <select
+                    value={assignData.field_agent_id}
+                    onChange={(e) =>
+                        setAssignData('field_agent_id', e.target.value)
+                    }
+                    className="w-full border rounded-lg"
+                >
+                    <option value="">
+                        Select Agent
+                    </option>
+
+                    {fieldAgents.map((agent) => (
+                        <option
+                            key={agent.id}
+                            value={agent.id}
+                        >
+                            {agent.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div className="flex items-end">
+
+                <button
+                    onClick={assignSubCounty}
+                    disabled={assignProcessing}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                >
+                    Assign Sub-County
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+</div>
+
                 </div>
             </div>
 
