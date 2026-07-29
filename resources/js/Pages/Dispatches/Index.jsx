@@ -95,10 +95,6 @@ export default function Index({ auth, dispatches, stats }) {
                                         </th>
 
                                         <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Schools
-                                        </th>
-
-                                        <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                                             Delivered
                                         </th>
 
@@ -159,13 +155,7 @@ export default function Index({ auth, dispatches, stats }) {
                                                     {dispatch.field_agent}
 
                                                 </td>
-
-                                                <td className="whitespace-nowrap px-6 py-4 text-center">
-
-                                                    {dispatch.schools}
-
-                                                </td>
-
+                                                
                                                 <td className="whitespace-nowrap px-6 py-4 text-center">
 
                                                     {dispatch.delivered} / {dispatch.schools}

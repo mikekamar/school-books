@@ -85,20 +85,7 @@ export default function Show({ auth, dispatch, stats, fieldAgents, subCounties }
         remarks: '',
     });
 
-    const openDeliveryModal = (item) => {
-        setSelectedItem(item);
-
-        reset();
-
-        setData({
-            receiver_name: '',
-            receiver_phone: '',
-            remarks: '',
-        });
-    };
-
-    const submitDelivery = (e) => {
-    e.preventDefault();
+  
 
     patch(route('dispatch-items.deliver', selectedItem.id), {
         preserveScroll: true,
@@ -330,7 +317,6 @@ export default function Show({ auth, dispatch, stats, fieldAgents, subCounties }
 
                     </div>
 
-                    {/* Search */}
 
 <div className="rounded-lg bg-white shadow p-6">
 
@@ -419,4 +405,3 @@ export default function Show({ auth, dispatch, stats, fieldAgents, subCounties }
            
         </AuthenticatedLayout>
     );
-}
