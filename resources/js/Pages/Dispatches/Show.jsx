@@ -388,304 +388,89 @@ export default function Show({ auth, dispatch, stats, fieldAgents, subCounties }
     </div>
 </div>
 
-                        <div className="overflow-x-auto">
+<div className="overflow-x-auto">
 
-                        <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="bg-white rounded-lg shadow p-6 mb-6">
 
-    <h2 className="text-lg font-semibold mb-4">
-        Assign Sub County
-    </h2>
+        <h2 className="text-lg font-semibold mb-4">
+            Assign Sub County
+        </h2>
 
-    <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4">
 
-        <div>
-            <label className="block text-sm font-medium mb-2">
-                Sub County
-            </label>
+            <div>
+                <label className="block text-sm font-medium mb-2">
+                    Sub County
+                </label>
 
-            <select
-                value={selectedSubCounty}
-                onChange={(e) => setSelectedSubCounty(e.target.value)}
-                className="w-full border rounded-lg p-2"
-            >
-                <option value="">All Sub Counties</option>
+                <select
+                    value={selectedSubCounty}
+                    onChange={(e) => setSelectedSubCounty(e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                >
+                    <option value="">All Sub Counties</option>
 
-                {subCounties.map((subCounty) => (
-                    <option
-                        key={subCounty.id}
-                        value={subCounty.id}
-                    >
-                        {subCounty.name}
+                    {subCounties.map((subCounty) => (
+                        <option
+                            key={subCounty.id}
+                            value={subCounty.id}
+                        >
+                            {subCounty.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium mb-2">
+                    Field Agent
+                </label>
+
+                <select
+                    value={assignData.field_agent_id}
+                    onChange={(e) =>
+                        setAssignData('field_agent_id', e.target.value)
+                    }
+                    className="w-full border rounded-lg"
+                >
+                    <option value="">
+                        Select Agent
                     </option>
-                ))}
-            </select>
-        </div>
 
-        <div>
-            <label className="block text-sm font-medium mb-2">
-                Field Agent
-            </label>
+                    {fieldAgents.map((agent) => (
+                        <option
+                            key={agent.id}
+                            value={agent.id}
+                        >
+                            {agent.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
 
-            <select
-                value={assignData.field_agent_id}
-                onChange={(e) =>
-                    setAssignData('field_agent_id', e.target.value)
-                }
-                className="w-full border rounded-lg"
-            >
-                <option value="">
-                    Select Agent
-                </option>
+            <div className="flex items-end">
 
-                {fieldAgents.map((agent) => (
-                    <option
-                        key={agent.id}
-                        value={agent.id}
-                    >
-                        {agent.name}
-                    </option>
-                ))}
-            </select>
-        </div>
+                <button
+                    onClick={assignSubCounty}
+                    disabled={assignProcessing}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                >
+                    Assign Sub-County
+                </button>
 
-        <div className="flex items-end">
-
-            <button
-                onClick={assignSubCounty}
-                disabled={assignProcessing}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
-                Assign Schools
-            </button>
+            </div>
 
         </div>
 
     </div>
-
 </div>
 
-                            <table className="min-w-full divide-y divide-gray-200">
-
-                                <thead className="bg-gray-50">
-
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            Selected
-                                        </th>
-
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            School
-                                        </th>
-
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            UIC
-                                        </th>
-
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            Sub County
-                                        </th>
-
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            Assigned To
-                                        </th>
-
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            Status
-                                        </th>
-
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                            Delivered At
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold">
-                                                Action
-                                        </th>
-
-                                    </tr>
-
-                                </thead>
-
-                                <tbody className="divide-y divide-gray-200 bg-white">
-
-                                    {filteredItems.length > 0 ? (
-
-                                        filteredItems.map((item) => (
-
-                                            <tr key={item.id}>
-
-                                                <td className="px-4 py-3">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedSchools.includes(item.id)}
-                                                        onChange={() => toggleSchool(item.id)}
-                                                    />
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    {item.school.school_name}
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    {item.school.uic}
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    {item.school.sub_county}
-                                                </td>
-
-                                                <td className="px-4 py-3">
-                                                    {item.assignee ? item.assignee.name : "Unassigned"}
-                                                </td>
-
-                                                <td className="px-4 py-3">
-
-                                                    <span
-                                                        className={`rounded-full px-3 py-1 text-sm font-medium ${badgeClass(
-                                                            item.status
-                                                        )}`}
-                                                    >
-                                                        {item.status}
-                                                    </span>
-
-                                                </td>
-
-                                                <td className="px-4 py-3">
-
-                                                    {item.delivered_at
-                                                        ? item.delivered_at
-                                                        : "-"}
-
-                                                </td>
-
-                                                <td className="border px-4 py-2 text-center">
-
-                                                    {item.status === 'Pending' ? (
-
-                                                        <button
-                                                            onClick={() => openDeliveryModal(item)}
-                                                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
-                                                        >
-                                                            Deliver
-                                                        </button>
-
-                                                    ) : (
-
-                                                        <span className="text-green-600 font-semibold">
-                                                            ✓ Delivered
-                                                        </span>
-
-                                                    )}
-
-                                                </td>
-
-                                            </tr>
-
-                                        ))
-
-                                    ) : (
-
-                                        <tr>
-
-                                            <td
-                                                colSpan="5"
-                                                className="px-4 py-6 text-center text-gray-500"
-                                            >
-                                                No schools found.
-                                            </td>
-
-                                        </tr>
-
-                                    )}
-
-                                </tbody>
-
-                            </table>
-
-                        </div>
-
-                    </div>
+</div>
 
                 </div>
             </div>
 
-            {selectedItem && (
-
-<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-    <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
-
-        <h2 className="text-xl font-bold mb-4">
-            Confirm Delivery
-        </h2>
-
-        <form onSubmit={submitDelivery}>
-
-            <div className="mb-4">
-                <label className="block mb-1">
-                    Receiver Name
-                </label>
-
-                <input
-                    type="text"
-                    className="w-full border rounded p-2"
-                    value={data.receiver_name}
-                    onChange={(e)=>setData('receiver_name',e.target.value)}
-                    required
-                />
-            </div>
-
-            <div className="mb-4">
-                <label className="block mb-1">
-                    Phone
-                </label>
-
-                <input
-                    type="text"
-                    className="w-full border rounded p-2"
-                    value={data.receiver_phone}
-                    onChange={(e)=>setData('receiver_phone',e.target.value)}
-                />
-            </div>
-
-            <div className="mb-4">
-                <label className="block mb-1">
-                    Remarks
-                </label>
-
-                <textarea
-                    className="w-full border rounded p-2"
-                    rows="3"
-                    value={data.remarks}
-                    onChange={(e)=>setData('remarks',e.target.value)}
-                />
-            </div>
-
-            <div className="flex justify-end gap-3">
-
-                <button
-                    type="button"
-                    onClick={()=>setSelectedItem(null)}
-                    className="px-4 py-2 bg-gray-500 text-white rounded"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    type="submit"
-                    disabled={processing}
-                    className="px-4 py-2 bg-green-600 text-white rounded"
-                >
-                    Confirm Delivery
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</div>
-
-)}
+           
         </AuthenticatedLayout>
     );
 }
