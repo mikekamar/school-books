@@ -165,14 +165,26 @@ public function show(Dispatch $dispatch)
         'items.assignee',
     ]);
 
-    if ($isCountyAgent) {
+    $user = auth()->user();
 
+if (
+    $user->hasRole('Admin') ||
+    $user->hasRole('Store Manager')
+) {
+
+    // Admin and Store Manager see every school
+    $items = $dispatch->items;
+
+} elseif ($isCountyAgent) {
+
+    // County field agent sees every school in the county
     $items = $dispatch->items;
 
 } else {
 
+    // Sub-county field agent sees only assigned schools
     $items = $dispatch->items
-        ->where('assigned_to', auth()->id())
+        ->where('assigned_to', $user->id)
         ->values();
 
 }
@@ -205,6 +217,7 @@ public function show(Dispatch $dispatch)
         ->unique('id')
         ->values();
 
+    
     return Inertia::render('Dispatches/Show', [
 
         'dispatch' => [
