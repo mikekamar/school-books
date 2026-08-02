@@ -99,31 +99,72 @@ export default function MyDispatches({ dispatches }) {
                                                     className="flex items-center justify-between border rounded-lg p-4 bg-gray-50"
                                                 >
 
-                                                    <div>
+                                                    <div className="flex-1">
 
-                                                        <h4 className="font-semibold">
+    <div className="flex justify-between items-center">
 
-                                                            {subCounty.name}
+        <h4 className="font-semibold text-gray-800">
+            {subCounty.name}
+        </h4>
 
-                                                        </h4>
+        <span
+            className={`text-sm font-bold
+                ${
+                    subCounty.progress === 100
+                        ? "text-green-600"
+                        : subCounty.progress >= 70
+                        ? "text-blue-600"
+                        : subCounty.progress >= 40
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                }`}
+        >
+            {subCounty.progress}%
+        </span>
 
-                                                        <p className="text-sm text-gray-500">
+    </div>
 
-                                                            {subCounty.schools} Schools
+    <p className="text-sm text-gray-500 mt-1">
 
-                                                        </p>
+        {subCounty.delivered} of {subCounty.schools} schools delivered
 
-                                                        {subCounty.assigned_to && (
+    </p>
 
-                                                            <p className="text-xs text-blue-600 mt-1">
+    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
 
-                                                                Assigned to: {subCounty.assigned_to}
+        <div
+            className={`h-2 rounded-full transition-all duration-500
+                ${
+                    subCounty.progress === 100
+                        ? "bg-green-600"
+                        : subCounty.progress >= 70
+                        ? "bg-blue-600"
+                        : subCounty.progress >= 40
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                }`}
+            style={{
+                width: `${subCounty.progress}%`,
+            }}
+        />
 
-                                                            </p>
+    </div>
 
-                                                        )}
+</div>
 
-                                                    </div>
+{subCounty.progress === 100 && (
+
+    <div className="mt-3">
+
+        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+
+            ✓ Completed
+
+        </span>
+
+    </div>
+
+)}
 
                                                     <Link
                                                         href={route(

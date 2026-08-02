@@ -57,6 +57,12 @@ Route::middleware('auth')->group(function () {
     [DispatchController::class, 'subCountyShortages']
     )->name('dispatches.subcounty.shortages');
 
+    Route::middleware(['role:Admin|Store Manager'])->group(function () {
+
+    Route::get('/reports/subcounty-reconciliation/{dispatch?}', [DispatchController::class, 'subCountyReconciliation'])
+        ->name('reports.subcounty-reconciliation');
+
+    });
     Route::prefix('reports')->name('reports.')->group(function () {
 
         Route::get('/delivery-summary', [ReportController::class, 'deliverySummary'])

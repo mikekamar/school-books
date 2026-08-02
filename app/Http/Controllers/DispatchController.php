@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+
 use App\Models\Dispatch;
 use App\Models\DispatchItem;
 use App\Models\County;
 use App\Models\School;
 use App\Models\User;
 use App\Models\SubCounty;
-use Inertia\Inertia;
 use App\Models\SchoolBook;
 use App\Models\DispatchItemBook;
 
@@ -399,29 +400,52 @@ $isCountyAgent = $dispatch->field_agent_id == auth()->id();
     if ($isCountyAgent) {
 
         $assignedSubCounties = $dispatch->items
-            ->groupBy(function ($item) {
-                return $item->school->subCounty?->id;
-            })
-            ->map(function ($items) {
+    ->groupBy(fn($item) => $item->school->subCounty?->id)
+    ->map(function ($items) {
 
-                $first = $items->first();
+        $first = $items->first();
 
-                return [
+        $total = $items->count();
 
-                    'id' => $first->school->subCounty->id,
+        $delivered = $items
+            ->where('status', 'Delivered')
+            ->count();
 
-                    'name' => $first->school->subCounty->name,
+        $partial = $items
+            ->where('status', 'Partial')
+            ->count();
 
-                    'schools' => $items->count(),
+        $pending = $items
+            ->where('status', 'Pending')
+            ->count();
 
-                    'assigned_to' => $first->assignee
-                        ? $first->assignee->name
-                        : 'Not Assigned',
+        return [
 
-                ];
+            'id' => $first->school->subCounty->id,
 
-            })
-            ->values();
+            'name' => $first->school->subCounty->name,
+
+            'schools' => $total,
+
+            'delivered' => $delivered,
+
+            'partial' => $partial,
+
+            'pending' => $pending,
+
+            'progress' => $total > 0
+                ? round(($delivered / $total) * 100)
+                : 0,
+
+            'assigned_to' => $first->assignee
+                ? $first->assignee->name
+                : 'Not Assigned',
+
+        ];
+
+    })
+    ->sortBy('progress')
+    ->values();
 
     } else {
 
@@ -1058,5 +1082,83 @@ public function subCountyShortages(
         'schools' => $schools,
     ]);
 }
-            
+
+public function subCountyReconciliation(Dispatch $dispatch = null)
+{
+    // Fetch all dispatches for the dropdown selector
+$dispatches = Dispatch::select('id', 'dispatch_number', 'county_id', 'created_at')
+    ->with('county:id,name') // Eager load only needed columns from county table
+    ->latest()
+    ->get();
+
+    // Fall back to the latest dispatch if none selected
+    if (!$dispatch || !$dispatch->exists) {
+        $dispatch = $dispatches->first();
+    }
+
+    // If no dispatches exist at all in the system
+    if (!$dispatch) {
+        return Inertia::render('Reports/SubCountyReconciliation', [
+            'dispatches' => [],
+            'selectedDispatchId' => null,
+            'subCounties' => [],
+            'totals' => ['schools' => 0, 'dispatched' => 0, 'received' => 0, 'variance' => 0, 'percentage' => 0],
+        ]);
+    }
+
+    $subCounties = DB::table('dispatch_item_books')
+        ->join('dispatch_items', 'dispatch_item_books.dispatch_item_id', '=', 'dispatch_items.id')
+        ->join('schools', 'dispatch_items.school_id', '=', 'schools.id')
+        ->join('sub_counties', 'schools.sub_county_id', '=', 'sub_counties.id')
+        ->where('dispatch_items.dispatch_id', $dispatch->id)
+        ->select(
+            'sub_counties.id',
+            'sub_counties.name',
+            DB::raw('COUNT(DISTINCT schools.id) as schools'),
+            DB::raw('SUM(COALESCE(dispatch_item_books.allocated_quantity, 0)) as dispatched'),
+            DB::raw('SUM(COALESCE(dispatch_item_books.received_quantity, 0)) as received'),
+            DB::raw('SUM(COALESCE(dispatch_item_books.allocated_quantity, 0) - COALESCE(dispatch_item_books.received_quantity, 0)) as variance')
+        )
+        ->groupBy('sub_counties.id', 'sub_counties.name')
+        ->orderBy('sub_counties.name')
+        ->get();
+
+    $formattedSubCounties = $subCounties->map(function ($row) {
+        $dispatched = (float) $row->dispatched;
+        $received = (float) $row->received;
+        $variance = (float) $row->variance;
+
+        $percentage = $dispatched > 0
+            ? round(($received / $dispatched) * 100, 1)
+            : 0;
+
+        return [
+            'id' => $row->id,
+            'name' => $row->name,
+            'schools' => (int) $row->schools,
+            'dispatched' => $dispatched,
+            'received' => $received,
+            'variance' => $variance,
+            'percentage' => $percentage,
+        ];
+    });
+
+    $totals = [
+        'schools' => $formattedSubCounties->sum('schools'),
+        'dispatched' => $formattedSubCounties->sum('dispatched'),
+        'received' => $formattedSubCounties->sum('received'),
+        'variance' => $formattedSubCounties->sum('variance'),
+    ];
+
+    $totals['percentage'] = $totals['dispatched'] > 0
+        ? round(($totals['received'] / $totals['dispatched']) * 100, 1)
+        : 0;
+
+    return Inertia::render('Reports/SubCountyReconciliation', [
+        'dispatches' => $dispatches,
+        'selectedDispatchId' => $dispatch->id,
+        'subCounties' => $formattedSubCounties,
+        'totals' => $totals,
+    ]);
+}
 }

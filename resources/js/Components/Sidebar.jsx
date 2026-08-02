@@ -284,6 +284,19 @@ can('view reports') && (
                 🗺 County Progress
             </Link>
 
+           <Link
+                href={route('reports.subcounty-reconciliation')}
+                className="
+                    block rounded-lg
+                    px-3 py-2
+                    text-sm
+                    text-gray-300
+                    hover:bg-slate-800
+                    hover:text-white
+                "
+            >
+                🗺 County Reconciliation
+            </Link>
             <Link
                 href={route('reports.outstanding-schools')}
                 className="
