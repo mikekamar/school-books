@@ -8,6 +8,8 @@ export default function Show({
     stats,
 }) {
 
+    console.log(dispatch.assignments);
+
     const [search, setSearch] = useState("");
     const [schoolSearch, setSchoolSearch] = useState("");
     const [selectedSubCounty, setSelectedSubCounty] = useState(null);
@@ -175,11 +177,38 @@ const filteredSubCounties = useMemo(() => {
                             <div>
 
                                 <p className="text-sm text-gray-500">
-                                    Field Agent
+                                    Assigned Field Agents
+                                </p>
+
+                                <div className="space-y-1">
+
+                                    {dispatch.assignments.map((assignment) => (
+                                        <div
+                                            key={assignment.id}
+                                            className="text-sm"
+                                        >
+                                            <span className="font-semibold">
+                                                {assignment.field_agent.name}
+                                            </span>
+
+                                            <span className="text-gray-500">
+                                                {" "}— {assignment.sub_county.name}
+                                            </span>
+                                        </div>
+                                    ))}
+
+                                </div>
+
+                            </div>
+
+                            <div>
+
+                                <p className="text-sm text-gray-500">
+                                    Driver
                                 </p>
 
                                 <p className="font-semibold">
-                                    {dispatch.field_agent.name}
+                                    {dispatch.driver?.name ?? "Not Assigned"}
                                 </p>
 
                             </div>

@@ -53,4 +53,9 @@ class User extends Authenticatable
 {
     return $this->hasMany(Dispatch::class, 'field_agent_id');
 }
+
+public function assignedSubCounties()
+{
+    return $this->hasMany(DispatchAssignment::class, 'field_agent_id');
+}
 }

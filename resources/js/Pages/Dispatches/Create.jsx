@@ -72,28 +72,44 @@ export default function Create({
     /**
      * Assign Field Agent
      */
-    const updateAssignment = (subCountyId, fieldAgentId) => {
+   const updateAssignment = (subCountyId, fieldAgentId) => {
 
-        setData(
+    const assignments = [...data.assignments];
 
-            "assignments",
+    const index = assignments.findIndex(
+        item => item.sub_county_id === subCountyId
+    );
 
-            data.assignments.map(item =>
+    if (fieldAgentId === "") {
 
-                item.sub_county_id === subCountyId
+        if (index >= 0) {
+            assignments.splice(index, 1);
+        }
 
-                    ? {
-                        ...item,
-                        field_agent_id: fieldAgentId,
-                    }
+    } else {
 
-                    : item
+        if (index >= 0) {
 
-            )
+            assignments[index] = {
+                ...assignments[index],
+                field_agent_id: Number(fieldAgentId),
+            };
 
-        );
+        } else {
 
-    };
+            assignments.push({
+                sub_county_id: subCountyId,
+                field_agent_id: Number(fieldAgentId),
+            });
+
+        }
+
+    }
+
+    setData("assignments", assignments);
+
+    console.log(assignments);
+};
 
 
     /**
@@ -137,7 +153,7 @@ export default function Create({
     const submit = (e) => {
 
         e.preventDefault();
-
+console.log(data);
         post(route("dispatches.store"));
 
     };

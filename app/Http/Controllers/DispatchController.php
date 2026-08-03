@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\SubCounty;
 use App\Models\SchoolBook;
 use App\Models\DispatchItemBook;
+use App\Models\DispatchAssignment;
 
 class DispatchController extends Controller
 {
@@ -24,30 +25,34 @@ class DispatchController extends Controller
         return redirect()->route('dispatches.mine');
     }
 
-    $dispatches = Dispatch::with([
-        'county',
-        'fieldAgent',
-    ])
-    ->withCount('items')
-    ->latest()
-    ->paginate(10)
-    ->through(function ($dispatch) {
+   $dispatches = Dispatch::with([
+    'county',
+    'driver',
+    'assignments.fieldAgent',
+])
+->withCount('items')
+->latest()
+->paginate(10)
+->through(function ($dispatch) {
 
-        $delivered = $dispatch->items()
-            ->where('status', 'Delivered')
-            ->count();
+    $delivered = $dispatch->items()
+        ->where('status', 'Delivered')
+        ->count();
 
-        return [
-            'id' => $dispatch->id,
-            'dispatch_number' => $dispatch->dispatch_number,
-            'county' => $dispatch->county->name,
-            'field_agent' => $dispatch->fieldAgent->name,
-            'dispatch_date' => $dispatch->dispatch_date,
-            'status' => $dispatch->status,
-            'schools' => $dispatch->items_count,
-            'delivered' => $delivered,
-        ];
-    });
+    return [
+        'id' => $dispatch->id,
+        'dispatch_number' => $dispatch->dispatch_number,
+        'county' => $dispatch->county->name,
+        'driver' => optional($dispatch->driver)->name,
+        'fieldAgents' => $dispatch->assignments
+            ->pluck('fieldAgent.name')
+            ->implode(', '),
+        'dispatch_date' => $dispatch->dispatch_date,
+        'status' => $dispatch->status,
+        'schools' => $dispatch->items_count,
+        'delivered' => $delivered,
+    ];
+});
 
     return Inertia::render('Dispatches/Index', [
         'dispatches' => $dispatches,
@@ -65,74 +70,103 @@ class DispatchController extends Controller
 {
     return Inertia::render('Dispatches/Create', [
 
-        'counties' => County::withCount('schools')
-            ->orderBy('name')
-            ->get(),
+    'counties' => County::with([
+        'subCounties:id,county_id,name'
+    ])
+    ->withCount('schools')
+    ->orderBy('name')
+    ->get(),
 
-        'fieldAgents' => User::role('field agent')
-            ->orderBy('name')
-            ->get(),
+    'fieldAgents' => User::role('field agent')
+        ->orderBy('name')
+        ->get(),
 
-    ]);
+    'drivers' => User::role('driver')
+        ->orderBy('name')
+        ->get(),
+
+]);
 }
 
     public function store(Request $request)
 {
     $validated = $request->validate([
         'county_id' => ['required', 'exists:counties,id'],
-        'field_agent_id' => ['required', 'exists:users,id'],
+        'driver_id' => ['required', 'exists:users,id'],
         'dispatch_date' => ['required', 'date'],
         'remarks' => ['nullable', 'string'],
-    ]);
 
-    DB::transaction(function () use ($validated) {
+        'assignments' => ['required', 'array', 'min:1'],
 
-        $dispatch = Dispatch::create([
-            'dispatch_number' => $this->generateDispatchNumber(),
-            'county_id' => $validated['county_id'],
-            'field_agent_id' => $validated['field_agent_id'],
-            'created_by' => auth()->id(),
-            'dispatch_date' => $validated['dispatch_date'],
-            'remarks' => $validated['remarks'] ?? null,
-            'status' => 'Pending',
-        ]);
+        'assignments.*.sub_county_id' => [
+            'required',
+            'exists:sub_counties,id'
+        ],
 
-        $schools = School::where('county_id', $validated['county_id'])->get();
-
-        foreach ($schools as $school) {
-
-           $dispatchItem = $dispatch->items()->create([
-                'school_id' => $school->id,
-                'assigned_to' => $validated['field_agent_id'],
-                'assigned_by' => auth()->id(),
-                'assigned_at' => now(),
-                'status' => 'Pending',
+        'assignments.*.field_agent_id' => [
+            'required',
+            'exists:users,id'
+        ],
             ]);
 
-            // Get all allocated books for this school
-    $schoolBooks = SchoolBook::where('school_id', $school->id)->get();
+    $number = 'DIS-' . now()->format('YmdHis');
 
-    foreach ($schoolBooks as $schoolBook) {
+    DB::transaction(function () use ($validated, $number) {
 
-        DispatchItemBook::create([
-
-            'dispatch_item_id'   => $dispatchItem->id,
-
-            'book_id'            => $schoolBook->book_id,
-
-            'allocated_quantity' => $schoolBook->quantity,
-
-            'received_quantity'  => 0,
-
-            'damaged_quantity'   => 0,
-
-            'remarks'            => null,
-
+        $dispatch = Dispatch::create([
+            'dispatch_number' => $number,
+            'county_id' => $validated['county_id'],
+            'driver_id' => $validated['driver_id'],
+            'dispatch_date' => $validated['dispatch_date'],
+            'remarks' => $validated['remarks'] ?? null,
+            'created_by' => auth()->id(),
+            'status' => 'Pending',
         ]);
+        foreach ($validated['assignments'] as $assignment) {
+
+    DispatchAssignment::create([
+        'dispatch_id'    => $dispatch->id,
+        'sub_county_id'  => $assignment['sub_county_id'],
+        'field_agent_id' => $assignment['field_agent_id'],
+        'assigned_by'    => auth()->id(),
+    ]);
+
+    $schools = School::where(
+        'sub_county_id',
+        $assignment['sub_county_id']
+    )->get();
+
+    foreach ($schools as $school) {
+
+        $dispatchItem = $dispatch->items()->create([
+            'school_id'   => $school->id,
+            'assigned_to' => $assignment['field_agent_id'],
+            'assigned_by' => auth()->id(),
+            'assigned_at' => now(),
+            'status'      => 'Pending',
+        ]);
+
+        $schoolBooks = SchoolBook::where(
+            'school_id',
+            $school->id
+        )->get();
+
+        foreach ($schoolBooks as $schoolBook) {
+
+            DispatchItemBook::create([
+                'dispatch_item_id'   => $dispatchItem->id,
+                'book_id'            => $schoolBook->book_id,
+                'allocated_quantity' => $schoolBook->quantity,
+                'received_quantity'  => 0,
+                'damaged_quantity'   => 0,
+                'remarks'            => null,
+            ]);
+
+        }
 
     }
 
-        }
+}
 
     });
 
@@ -159,12 +193,14 @@ public function show(Dispatch $dispatch)
     }
 
     $dispatch->load([
-        'county',
-        'fieldAgent',
-        'creator',
-        'items.school.subCounty',
-        'items.assignee',
-    ]);
+    'county',
+    'driver',
+    'creator',
+    'assignments.subCounty',
+    'assignments.fieldAgent',
+    'items.school.subCounty',
+    'items.assignee',
+]);
 
     $user = auth()->user();
 
@@ -221,78 +257,94 @@ if (
     
     return Inertia::render('Dispatches/Show', [
 
-        'dispatch' => [
+    'dispatch' => [
 
-            'id' => $dispatch->id,
-            'dispatch_number' => $dispatch->dispatch_number,
-            'dispatch_date' => $dispatch->dispatch_date,
-            'status' => $dispatch->status,
-            'remarks' => $dispatch->remarks,
+        'id' => $dispatch->id,
+        'dispatch_number' => $dispatch->dispatch_number,
+        'dispatch_date' => $dispatch->dispatch_date,
+        'status' => $dispatch->status,
+        'remarks' => $dispatch->remarks,
 
-            'county' => [
-                'id' => $dispatch->county->id,
-                'name' => $dispatch->county->name,
-            ],
-
-            'field_agent' => [
-                'id' => $dispatch->fieldAgent->id,
-                'name' => $dispatch->fieldAgent->name,
-            ],
-
-            'creator' => [
-                'id' => $dispatch->creator->id,
-                'name' => $dispatch->creator->name,
-            ],
-
-            'items' => $items->map(function ($item) {
-
-                return [
-
-                    'id' => $item->id,
-
-                    'status' => $item->status,
-                    'delivered_at' => $item->delivered_at,
-                    'remarks' => $item->remarks,
-
-                    'receiver_name' => $item->receiver_name,
-                    'receiver_phone' => $item->receiver_phone,
-
-                    'assigned_to' => $item->assigned_to,
-                    'assigned_by' => $item->assigned_by,
-                    'assigned_at' => $item->assigned_at,
-
-                    'assignee' => $item->assignee
-                        ? [
-                            'id' => $item->assignee->id,
-                            'name' => $item->assignee->name,
-                        ]
-                        : null,
-
-                    'school' => [
-                        'id' => $item->school->id,
-                        'school_name' => $item->school->school_name,
-                        'uic' => $item->school->uic,
-                        'sub_county' => $item->school->subCounty?->name,
-                        'sub_county_id' => $item->school->sub_county_id,
-                    ],
-                    
-
-                ];
-            })->values(),
-
+        'county' => [
+            'id' => $dispatch->county->id,
+            'name' => $dispatch->county->name,
         ],
 
-        'fieldAgents' => $fieldAgents,
-        'subCounties' => $subCounties,
+        'driver' => $dispatch->driver ? [
+            'id' => $dispatch->driver->id,
+            'name' => $dispatch->driver->name,
+        ] : null,
 
-        'stats' => [
+        'creator' => [
+            'id' => $dispatch->creator->id,
+            'name' => $dispatch->creator->name,
+        ],
+
+        'assignments' => $dispatch->assignments->map(function ($assignment) {
+
+            return [
+
+                'id' => $assignment->id,
+
+                'sub_county' => [
+                    'id' => $assignment->subCounty->id,
+                    'name' => $assignment->subCounty->name,
+                ],
+
+                'field_agent' => [
+                    'id' => $assignment->fieldAgent->id,
+                    'name' => $assignment->fieldAgent->name,
+                ],
+
+            ];
+
+        })->values(),
+
+        'items' => $items->map(function ($item) {
+
+            return [
+
+                'id' => $item->id,
+
+                'status' => $item->status,
+                'delivered_at' => $item->delivered_at,
+                'remarks' => $item->remarks,
+
+                'receiver_name' => $item->receiver_name,
+                'receiver_phone' => $item->receiver_phone,
+
+                'assigned_to' => $item->assigned_to,
+                'assigned_by' => $item->assigned_by,
+                'assigned_at' => $item->assigned_at,
+
+                'assignee' => $item->assignee ? [
+                    'id' => $item->assignee->id,
+                    'name' => $item->assignee->name,
+                ] : null,
+
+                'school' => [
+                    'id' => $item->school->id,
+                    'school_name' => $item->school->school_name,
+                    'uic' => $item->school->uic,
+                    'sub_county' => $item->school->subCounty?->name,
+                    'sub_county_id' => $item->school->sub_county_id,
+                ],
+
+            ];
+
+        })->values(),
+
+    ],
+
+    'fieldAgents' => $fieldAgents,
+
+    'subCounties' => $subCounties,
+
+    'stats' => [
 
         'total' => $totalSchools,
-
         'delivered' => $delivered,
-
         'partial' => $partial,
-
         'pending' => $pending,
 
         'progress' => $totalSchools > 0
@@ -301,7 +353,7 @@ if (
 
     ],
 
-    ]);
+]);
 }
 
 public function edit(Dispatch $dispatch)
