@@ -20,7 +20,7 @@ class BookSeeder extends Seeder
             'business_studies_tg',
             'electricity_lb',
             'electricity_tg',
-            'power_mechanics',
+            'power_mechanics_lb',
             'power_mechanics_tg',
 
         ];

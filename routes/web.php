@@ -63,6 +63,12 @@ Route::middleware('auth')->group(function () {
         ->name('reports.subcounty-reconciliation');
 
     });
+
+    Route::patch(
+    '/dispatch-items/{dispatchItem}/reopen',
+    [DispatchController::class, 'reopenSchool']
+    )->name('dispatch-items.reopen');
+    
     Route::prefix('reports')->name('reports.')->group(function () {
 
         Route::get('/delivery-summary', [ReportController::class, 'deliverySummary'])

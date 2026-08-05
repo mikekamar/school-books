@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\DispatchItem;
 use App\Models\County;
+use App\Models\subCounty;
+use App\Models\Dispatch;
+use App\models\DispatchItemBook;
 
 class Dispatch extends Model
 {
@@ -40,7 +43,27 @@ protected $fillable = [
     }
 
     public function assignments()
-{
-    return $this->hasMany(DispatchAssignment::class);
-}
+    {
+        return $this->hasMany(DispatchAssignment::class);
+    }
+
+    public function fieldAgent()
+    {
+        return $this->belongsTo(User::class, 'field_agent_id');
+    }
+
+    public function subCounty()
+    {
+        return $this->belongsTo(SubCounty::class);
+    }
+
+    public function dispatch()
+    {
+        return $this->belongsTo(Dispatch::class);
+    }
+
+    public function books()
+    {
+        return $this->hasMany(DispatchItemBook::class);
+    }
 }

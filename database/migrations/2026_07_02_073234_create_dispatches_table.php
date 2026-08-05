@@ -16,10 +16,6 @@ return new class extends Migration
 
             $table->foreignId('county_id')->constrained()->cascadeOnDelete();
 
-            $table->foreignId('field_agent_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
-
             $table->foreignId('created_by')
                 ->constrained('users')
                 ->cascadeOnDelete();

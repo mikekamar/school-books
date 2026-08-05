@@ -180,6 +180,26 @@ export default function SubCountyDispatch({ dispatch, stats }) {
 
     }
 
+    const reopenSchool = (dispatchItem) => {
+
+    if (
+        !window.confirm(
+            `Reopen delivery for ${dispatchItem.school.school_name}?\n\n` +
+            "This will reset the delivery details and return the school to Pending."
+        )
+    ) {
+        return;
+    }
+
+    router.patch(
+        route("dispatch-items.reopen", dispatchItem.id),
+        {},
+        {
+            preserveScroll: true,
+        }
+    );
+};
+
     return (
 
         <AuthenticatedLayout>
@@ -198,13 +218,13 @@ export default function SubCountyDispatch({ dispatch, stats }) {
 
                         </h1>
 
-                        <p className="text-gray-600">
+                        <p className="text-gray-900">
 
                             {dispatch.county.name}
 
                         </p>
 
-                        <p className="text-gray-500">
+                        <p className="text-gray-600">
 
                             {dispatch.subCounty.name}
 
@@ -425,6 +445,31 @@ export default function SubCountyDispatch({ dispatch, stats }) {
 
                                         </span>
 
+                                        {(item.status === "Delivered" || item.status === "Partial") && (
+
+                                            <button
+                                                onClick={() => reopenSchool(item)}
+                                                className="ml-2 inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 transition hover:bg-red-600 hover:text-white"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="h-3.5 w-3.5"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                    strokeWidth={2}
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M4 4v6h6M20 20v-6h-6M20 9A8 8 0 0 0 6.34 5.34L4 8m16 8-2.34 2.66A8 8 0 0 1 4 15"
+                                                    />
+                                                </svg>
+
+                                                Reopen
+                                            </button>
+                                        )}
+
                                     </td>
 
                                     <td className="p-3">
@@ -508,7 +553,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
 
                         <tbody>
 
-                            {filteredItems.map((item) => (
+                            {completedSchools.map((item) => (
 
                                 <tr
                                     key={item.id}
@@ -729,7 +774,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
 
                                     <tbody>
 
-                                        {filteredItems.map((item) => (
+                                        {pendingSchools.map((item) => (
 
                                             <tr
                                                 key={item.id}

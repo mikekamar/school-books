@@ -426,19 +426,18 @@ private function generateDispatchNumber(): string
 
 public function myDispatches()
 {
-    $dispatches = Dispatch::where(function ($query) {
-
-        // Original county dispatch
-        $query->where('field_agent_id', auth()->id());
-
+    $dispatches = Dispatch::whereHas('assignments', function ($query) {
+    $query->where('field_agent_id', auth()->id());
     })
-    ->orWhereHas('items', function ($query) {
-
-        // Delegated schools
-        $query->where('assigned_to', auth()->id());
-
-    })
-    ->with('county', 'items.school.subCounty', 'items.assignee')
+    ->with([
+    'county',
+    'driver',
+    'items.school.subCounty',
+    'assignments' => function ($query) {
+        $query->where('field_agent_id', auth()->id())
+              ->with(['fieldAgent', 'subCounty']);
+    },
+])
     ->latest()
     ->get()
     ->unique('id')
@@ -446,105 +445,77 @@ public function myDispatches()
 
     return Inertia::render('Dispatches/MyDispatches', [
         'dispatches' => $dispatches->map(function ($dispatch) {
-$isCountyAgent = $dispatch->field_agent_id == auth()->id();
+            $isCountyAgent = $dispatch->assignments
+    ->where('field_agent_id', auth()->id());
 
-    // County agent sees all subcounties
-    if ($isCountyAgent) {
+                // County agent sees all subcounties
+                if ($isCountyAgent) {
 
-        $assignedSubCounties = $dispatch->items
-    ->groupBy(fn($item) => $item->school->subCounty?->id)
-    ->map(function ($items) {
+            $assignedSubCounties = $dispatch->assignments->map(function ($assignment) use ($dispatch) {
 
-        $first = $items->first();
-
-        $total = $items->count();
-
-        $delivered = $items
-            ->where('status', 'Delivered')
-            ->count();
-
-        $partial = $items
-            ->where('status', 'Partial')
-            ->count();
-
-        $pending = $items
-            ->where('status', 'Pending')
-            ->count();
-
-        return [
-
-            'id' => $first->school->subCounty->id,
-
-            'name' => $first->school->subCounty->name,
-
-            'schools' => $total,
-
-            'delivered' => $delivered,
-
-            'partial' => $partial,
-
-            'pending' => $pending,
-
-            'progress' => $total > 0
-                ? round(($delivered / $total) * 100)
-                : 0,
-
-            'assigned_to' => $first->assignee
-                ? $first->assignee->name
-                : 'Not Assigned',
-
-        ];
-
-    })
-    ->sortBy('progress')
-    ->values();
-
-    } else {
-
-        // Delegated field agent only sees their own assigned subcounties
-        $assignedSubCounties = $dispatch->items
-            ->where('assigned_to', auth()->id())
-            ->groupBy(function ($item) {
-                return $item->school->subCounty?->id;
-            })
-            ->map(function ($items) {
-
-                $first = $items->first();
-
+                $items = $dispatch->items->filter(function ($item) use ($assignment) {
+                    return $item->school &&
+                        $item->school->sub_county_id == $assignment->sub_county_id;
+                });
                 return [
-
-                    'id' => $first->school->subCounty->id,
-
-                    'name' => $first->school->subCounty->name,
-
+                    'id' => $assignment->subCounty->id,
+                    'name' => $assignment->subCounty->name,
                     'schools' => $items->count(),
+                    'delivered' => $items->where('status', 'Delivered')->count(),
+                    'partial' => $items->where('status', 'Partial')->count(),
+                    'pending' => $items->where('status', 'Pending')->count(),
+                    'progress' => $items->count()
+                        ? round(($items->where('status', 'Delivered')->count() / $items->count()) * 100)
+                        : 0,
+];
+            })->sortBy('progress')->values();
 
-                ];
+                } else {
 
-            })
-            ->values();
-    }
+                    // Delegated field agent only sees their own assigned subcounties
+                    $assignedSubCounties = $dispatch->items
+                        ->where('assigned_to', auth()->id())
+                        ->groupBy(function ($item) {
+                            return $item->school->subCounty?->id;
+                        })
+                        ->map(function ($items) {
 
-            return [
+                            $first = $items->first();
 
-                'id' => $dispatch->id,
+                            return [
 
-                'dispatch_number' => $dispatch->dispatch_number,
+                                'id' => $first->school->subCounty->id,
 
-                'dispatch_date' => $dispatch->dispatch_date,
+                                'name' => $first->school->subCounty->name,
 
-                'status' => $dispatch->status,
+                                'schools' => $items->count(),
 
-                'county' => $dispatch->county->name,
+                            ];
 
-                'assigned_subcounties' => $assignedSubCounties,
+                        })
+                        ->values();
+                }
 
-            ];
+                        return [
 
-        }),
+                            'id' => $dispatch->id,
 
-    ]);
-}
+                            'dispatch_number' => $dispatch->dispatch_number,
+
+                            'dispatch_date' => $dispatch->dispatch_date,
+
+                            'status' => $dispatch->status,
+
+                            'county' => $dispatch->county->name,
+
+                            'assigned_subcounties' => $assignedSubCounties,
+
+                        ];
+
+                    }),
+
+                ]);
+            }
 
 public function deliverSchool(Request $request, DispatchItem $dispatchItem)
 {
@@ -650,6 +621,16 @@ public function subCountyDispatch(Dispatch $dispatch, SubCounty $subCounty)
 {
     $user = auth()->user();
 
+    $assignment = $dispatch->assignments()
+    ->with('fieldAgent')
+    ->where('sub_county_id', $subCounty->id)
+    ->where('field_agent_id', auth()->id())
+    ->first();
+
+if (!$assignment) {
+    abort(403, 'Unauthorized.');
+}
+
     // User must have schools assigned in this sub county
     $hasAccess = DispatchItem::where('dispatch_id', $dispatch->id)
         ->where('assigned_to', $user->id)
@@ -702,8 +683,8 @@ public function subCountyDispatch(Dispatch $dispatch, SubCounty $subCounty)
     'remarks' => $dispatch->remarks,
 
     'field_agent' => [
-        'id' => $dispatch->fieldAgent->id,
-        'name' => $dispatch->fieldAgent->name,
+        'id' => $assignment->fieldAgent->id,
+        'name' => $assignment->fieldAgent->name,
     ],
 
     'county' => [
@@ -1047,6 +1028,7 @@ public function subCountyShortages(
         'books.book',
     ])
         ->where('dispatch_id', $dispatch->id)
+        ->where('status', 'partial')
         ->whereHas('school', function ($query) use ($subCounty) {
             $query->where('sub_county_id', $subCounty->id);
         })
@@ -1212,5 +1194,42 @@ $dispatches = Dispatch::select('id', 'dispatch_number', 'county_id', 'created_at
         'subCounties' => $formattedSubCounties,
         'totals' => $totals,
     ]);
+}
+
+public function reopenSchool(DispatchItem $dispatchItem)
+{
+    $user = auth()->user();
+
+    // Ensure the logged-in field agent owns this school
+    if ($dispatchItem->assigned_to != $user->id) {
+        abort(403, 'Unauthorized.');
+    }
+
+    // Optional: prevent reopening if the dispatch is already completed
+    if ($dispatchItem->dispatch->status === 'Completed') {
+        return back()->with('error', 'This dispatch has already been completed.');
+    }
+
+    // Reset the school delivery information
+    $dispatchItem->update([
+        'status' => 'Pending',
+        'delivered_at' => null,
+        'receiver_name' => null,
+        'receiver_phone' => null,
+        'remarks' => null,
+    ]);
+
+    // Reset all dispatched books for this school
+    foreach ($dispatchItem->books as $book) {
+
+        $book->update([
+            'received_quantity' => 0,
+            'damaged_quantity' => 0,
+            'remarks' => null,
+        ]);
+
+    }
+
+    return back()->with('success', 'School delivery has been reopened successfully.');
 }
 }

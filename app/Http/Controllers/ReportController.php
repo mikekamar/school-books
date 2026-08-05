@@ -81,7 +81,8 @@ public function subCountyProgress(County $county)
     $countyTotal = 0;
     $countyDelivered = 0;
 
-    $subCounties = $county->subCounties->map(function ($subCounty) use (&$countyTotal, &$countyDelivered) {
+    $subCounties = $county->subCounties
+    ->map(function ($subCounty) use (&$countyTotal, &$countyDelivered) {
 
         $total = $subCounty->schools->count();
 
@@ -107,7 +108,9 @@ public function subCountyProgress(County $county)
                 ? round(($delivered / $total) * 100)
                 : 0,
         ];
-    });
+    })
+    ->sortBy('progress')
+    ->values();
 
     return Inertia::render('Reports/SubCountyProgress', [
         'county' => [
