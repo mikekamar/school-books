@@ -180,8 +180,8 @@ class SchoolsImport implements
                     => 'electricity_tg',
 
 
-                'power_mechanics'
-                    => 'power_mechanics',
+                'power_mechanics_lb'
+                    => 'power_mechanics_lb',
 
                 'power_mechanics_tg'
                     => 'power_mechanics_tg',

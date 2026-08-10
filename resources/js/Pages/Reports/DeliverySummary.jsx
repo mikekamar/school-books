@@ -1,49 +1,119 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head } from "@inertiajs/react";
+
 
 export default function DeliverySummary({ stats }) {
     return (
         <AuthenticatedLayout>
-            <div className="space-y-6">
+            <Head title="Delivery Summary" />
+            <div className="space-y-10">
 
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800">
-                        Delivery Summary
-                    </h1>
+    {/* School Summary */}
 
-                    <p className="mt-1 text-gray-500">
-                        Monitor the progress of book deliveries across all counties.
-                    </p>
-                </div>
+    <div>
 
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-4">
 
-                    <StatCard
-                        title="Total Schools"
-                        value={stats.total}
-                        color="blue"
-                    />
+            <h2 className="text-xl font-semibold text-gray-800">
+                School Delivery Progress
+            </h2>
 
-                    <StatCard
-                        title="Delivered"
-                        value={stats.delivered}
-                        color="green"
-                    />
+            <p className="text-sm text-gray-500">
+                Progress based on schools that have completed delivery.
+            </p>
 
-                    <StatCard
-                        title="Pending"
-                        value={stats.pending}
-                        color="yellow"
-                    />
+        </div>
 
-                    <StatCard
-                        title="Progress"
-                        value={`${stats.progress}%`}
-                        color="purple"
-                    />
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
 
-                </div>
+            <StatCard
+                title="Total Schools"
+                value={stats.total_schools}
+                color="blue"
+            />
 
-            </div>
+            <StatCard
+                title="Delivered"
+                value={stats.delivered_schools}
+                color="green"
+            />
+
+            <StatCard
+                title="Partial"
+                value={stats.partial_schools}
+                color="orange"
+            />
+
+            <StatCard
+                title="Pending"
+                value={stats.pending_schools}
+                color="yellow"
+            />
+
+            <StatCard
+                title="School Progress"
+                value={`${stats.school_progress}%`}
+                color="purple"
+            />
+
+        </div>
+
+    </div>
+
+
+    {/* Book Summary */}
+
+    <div>
+
+        <div className="mb-4">
+
+            <h2 className="text-xl font-semibold text-gray-800">
+                Book Delivery Progress
+            </h2>
+
+            <p className="text-sm text-gray-500">
+                Progress based on books received versus allocated.
+            </p>
+
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+
+            <StatCard
+                title="Allocated Books"
+                value={stats.allocated_books.toLocaleString()}
+                color="indigo"
+            />
+
+            <StatCard
+                title="Received Books"
+                value={stats.received_books.toLocaleString()}
+                color="green"
+            />
+
+            <StatCard
+                title="Missing Books"
+                value={stats.missing_books.toLocaleString()}
+                color="red"
+            />
+
+            <StatCard
+                title="Damaged Books"
+                value={stats.damaged_books.toLocaleString()}
+                color="yellow"
+            />
+
+            <StatCard
+                title="Book Progress"
+                value={`${stats.book_progress}%`}
+                color="blue"
+            />
+
+        </div>
+
+    </div>
+
+</div>
         </AuthenticatedLayout>
     );
 }
@@ -51,10 +121,13 @@ export default function DeliverySummary({ stats }) {
 function StatCard({ title, value, color }) {
 
     const colors = {
-        blue: "bg-blue-100 text-blue-700",
-        green: "bg-green-100 text-green-700",
-        yellow: "bg-yellow-100 text-yellow-700",
-        purple: "bg-purple-100 text-purple-700",
+    blue: "bg-blue-100 text-blue-700",
+    green: "bg-green-100 text-green-700",
+    yellow: "bg-yellow-100 text-yellow-700",
+    purple: "bg-purple-100 text-purple-700",
+    red: "bg-red-100 text-red-700",
+    indigo: "bg-indigo-100 text-indigo-700",
+    orange: "bg-orange-100 text-orange-700",
     };
 
     return (

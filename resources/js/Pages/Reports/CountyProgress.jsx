@@ -1,10 +1,11 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Link } from "@inertiajs/react";
+import { Link, Head } from "@inertiajs/react";
 
 export default function CountyProgress({ counties }) {
     return (
-
         <AuthenticatedLayout>
+            <Head title="Delivery Summary" />
+
             <div className="space-y-6">
 
                 <div>
@@ -29,19 +30,31 @@ export default function CountyProgress({ counties }) {
                                     County
                                 </th>
 
-                                <th className="text-center">
-                                    Total
+                                <th className="px-4 py-4 text-center">
+                                    Total Schools
                                 </th>
 
-                                <th className="text-center">
+                                <th className="px-4 py-4 text-center">
                                     Delivered
                                 </th>
 
-                                <th className="text-center">
+                                <th className="px-4 py-4 text-center">
                                     Pending
                                 </th>
 
-                                <th className="px-6">
+                                <th className="px-4 py-4 text-center">
+                                    Books Allocated
+                                </th>
+
+                                <th className="px-4 py-4 text-center">
+                                    Books Delivered
+                                </th>
+
+                                <th className="px-4 py-4 text-center">
+                                    Books Pending
+                                </th>
+
+                                <th className="px-6 py-4 text-center">
                                     Progress
                                 </th>
 
@@ -60,29 +73,44 @@ export default function CountyProgress({ counties }) {
 
                                     <td className="px-6 py-4 font-medium">
 
-                                    <Link
-                                        href={route('reports.subcounty-progress', county.id)}
-                                        className="font-medium text-indigo-600 hover:underline"
-                                    >
-                                        {county.name}
-                                    </Link>
-                                        
+                                        <Link
+                                            href={route(
+                                                "reports.subcounty-progress",
+                                                county.id
+                                            )}
+                                            className="font-medium text-indigo-600 hover:underline"
+                                        >
+                                            {county.name}
+                                        </Link>
+
                                     </td>
 
-                                    <td className="text-center">
+                                    <td className="px-4 py-4 text-center">
                                         {county.total}
                                     </td>
 
-                                    <td className="text-center text-green-600 font-semibold">
+                                    <td className="px-4 py-4 text-center text-green-600 font-semibold">
                                         {county.delivered}
                                     </td>
 
-                                    <td className="text-center text-red-600 font-semibold">
+                                    <td className="px-4 py-4 text-center text-red-600 font-semibold">
                                         {county.pending}
                                     </td>
 
-                                    <td className="text-center text-blue-600 font-semibold">
-                                            {county.progress}%
+                                    <td className="px-4 py-4 text-center font-semibold">
+                                        {county.books_allocated ?? 0}
+                                    </td>
+
+                                    <td className="px-4 py-4 text-center text-green-600 font-semibold">
+                                        {county.books_delivered ?? 0}
+                                    </td>
+
+                                    <td className="px-4 py-4 text-center text-red-600 font-semibold">
+                                        {county.books_pending ?? 0}
+                                    </td>
+
+                                    <td className="px-6 py-4 text-center text-blue-600 font-semibold">
+                                        {county.progress}%
                                     </td>
 
                                 </tr>

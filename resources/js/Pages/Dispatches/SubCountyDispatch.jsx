@@ -256,7 +256,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                     </div>
 
                     <div className="text-3xl font-bold">
-                        {stats.total}
+                        {stats.total_schools}
                     </div>
 
                 </div>
@@ -274,7 +274,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                     </div>
 
                     <div className="text-3xl font-bold text-white-600">
-                        {stats.delivered}
+                        {stats.delivered_schools}
                     </div>
 
                 </div>
@@ -292,7 +292,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                     </div>
 
                     <div className="text-3xl font-bold text-yellow-500">
-                        {stats.partial}
+                        {stats.partial_schools}
                     </div>
 
                 </div>
@@ -312,7 +312,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
 
                     <div className="text-3xl font-bold">
 
-                        {stats.pending}
+                        {stats.pending_schools}
 
                     </div>
 
@@ -326,8 +326,73 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                     </div>
 
                     <div className="text-3xl font-bold text-blue-600">
-                        {stats.progress}%
+                        {stats.school_progress}%
                     </div>
+
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+
+                    <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                        Book Progress
+                    </h3>
+
+                    <div className="flex justify-between text-sm mb-2">
+
+                        <span>Allocated Books</span>
+
+                        <span className="font-semibold">
+                            {stats.allocated_books}
+                        </span>
+
+                    </div>
+
+                    <div className="flex justify-between text-sm mb-2">
+
+                        <span>Received Books</span>
+
+                        <span className="font-semibold text-green-600">
+                            {stats.received_books}
+                        </span>
+
+                    </div>
+
+                    <div className="flex justify-between text-sm mb-2">
+
+                        <span>Missing Books</span>
+
+                        <span className="font-semibold text-red-600">
+                            {stats.missing_books}
+                        </span>
+
+                    </div>
+
+                    <div className="flex justify-between text-sm mb-4">
+
+                        <span>Damaged Books</span>
+
+                        <span className="font-semibold text-yellow-600">
+                            {stats.damaged_books}
+                        </span>
+
+                    </div>
+
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+
+                        <div
+                            className="bg-blue-600 h-3 rounded-full transition-all"
+                            style={{
+                                width: `${stats.book_progress}%`,
+                            }}
+                        />
+
+                    </div>
+
+                    <p className="text-center mt-3 font-bold text-lg">
+
+                        {stats.book_progress}%
+
+                    </p>
 
                 </div>
 

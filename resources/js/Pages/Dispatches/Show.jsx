@@ -479,10 +479,37 @@ const filteredSubCounties = useMemo(() => {
                                                                 subCounty.id
                                                             )
                                                         }
-                                                        className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition"
+                                                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm"
                                                     >
-                                                        View Schools
+                                                        View Progress
                                                     </button>
+
+                                                    {subCounty.progress === 100 ? (
+
+    <a
+        href={route(
+            "dispatches.subcounty.pdf",
+            [dispatch.id, subCounty.id]
+        )}
+        className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm"
+    >
+        Final PDF
+    </a>
+
+) : (
+
+    <a
+        href={route(
+            "dispatches.subcounty.pdf",
+            [dispatch.id, subCounty.id]
+        )}
+        className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-sm"
+    >
+        Draft PDF
+    </a>
+
+)}
+
 
                                                 </td>
 

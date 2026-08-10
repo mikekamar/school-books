@@ -15,6 +15,7 @@ use App\Models\SubCounty;
 use App\Models\SchoolBook;
 use App\Models\DispatchItemBook;
 use App\Models\DispatchAssignment;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DispatchController extends Controller
 {
@@ -646,6 +647,7 @@ if (!$assignment) {
     $items = DispatchItem::with([
             'school',
             'school.subCounty',
+            'books'
         ])
         ->where('dispatch_id', $dispatch->id)
         ->where('assigned_to', $user->id)
@@ -654,113 +656,157 @@ if (!$assignment) {
         })
         ->get();
 
-    $total = $items->count();
+    $totalSchools = $items->count();
 
-    $delivered = $items
-        ->where('status', 'Delivered')
-        ->count();
+$deliveredSchools = 0;
+$partialSchools = 0;
+$pendingSchools = 0;
 
-    $partial = $items
-        ->where('status', 'Partial')
-        ->count();
+$totalAllocatedBooks = 0;
+$totalReceivedBooks = 0;
+$totalDamagedBooks = 0;
 
-    $pending = $items
-        ->where('status', 'Pending')
-        ->count();
+foreach ($items as $item) {
 
-    return Inertia::render('Dispatches/SubCountyDispatch', [
+    switch ($item->status) {
 
-        'dispatch' => [
+        case 'Delivered':
+            $deliveredSchools++;
+            break;
 
-    'id' => $dispatch->id,
+        case 'Partial':
+            $partialSchools++;
+            break;
 
-    'dispatch_number' => $dispatch->dispatch_number,
+        default:
+            $pendingSchools++;
+            break;
+    }
 
-    'dispatch_date' => $dispatch->dispatch_date,
+    foreach ($item->books as $book) {
 
-    'status' => $dispatch->status,
+        $totalAllocatedBooks += $book->allocated_quantity;
 
-    'remarks' => $dispatch->remarks,
+        $totalReceivedBooks += $book->received_quantity;
 
-    'field_agent' => [
-        'id' => $assignment->fieldAgent->id,
-        'name' => $assignment->fieldAgent->name,
+        $totalDamagedBooks += $book->damaged_quantity;
+    }
+}
+
+$schoolProgress = $totalSchools > 0
+    ? round(($deliveredSchools / $totalSchools) * 100)
+    : 0;
+
+$bookProgress = $totalAllocatedBooks > 0
+    ? round(($totalReceivedBooks / $totalAllocatedBooks) * 100, 1)
+    : 0;
+
+return Inertia::render('Dispatches/SubCountyDispatch', [
+
+    'dispatch' => [
+
+        'id' => $dispatch->id,
+
+        'dispatch_number' => $dispatch->dispatch_number,
+
+        'dispatch_date' => $dispatch->dispatch_date,
+
+        'status' => $dispatch->status,
+
+        'remarks' => $dispatch->remarks,
+
+        'field_agent' => [
+            'id' => $assignment->fieldAgent->id,
+            'name' => $assignment->fieldAgent->name,
+        ],
+
+        'county' => [
+            'id' => $dispatch->county->id,
+            'name' => $dispatch->county->name,
+        ],
+
+        'creator' => [
+            'id' => $dispatch->creator->id,
+            'name' => $dispatch->creator->name,
+        ],
+
+        'subCounty' => [
+            'id' => $subCounty->id,
+            'name' => $subCounty->name,
+        ],
+
+        'items' => $items->map(function ($item) {
+
+            return [
+
+                'id' => $item->id,
+
+                'status' => $item->status,
+
+                'delivered_at' => $item->delivered_at,
+
+                'remarks' => $item->remarks,
+
+                'receiver_name' => $item->receiver_name,
+
+                'receiver_phone' => $item->receiver_phone,
+
+                'assigned_to' => $item->assigned_to,
+
+                'assigned_by' => $item->assigned_by,
+
+                'assigned_at' => $item->assigned_at,
+
+                'school' => [
+
+                    'id' => $item->school->id,
+
+                    'school_name' => $item->school->school_name,
+
+                    'uic' => $item->school->uic,
+
+                    'sub_county' => $item->school->subCounty?->name,
+
+                    'sub_county_id' => $item->school->sub_county_id,
+
+                ],
+
+            ];
+
+        })->values(),
+
     ],
 
-    'county' => [
-        'id' => $dispatch->county->id,
-        'name' => $dispatch->county->name,
-    ],
+    'stats' => [
 
-    'creator' => [
-        'id' => $dispatch->creator->id,
-        'name' => $dispatch->creator->name,
-    ],
+        // School Progress
+        'total_schools' => $totalSchools,
 
-    'subCounty' => [
-        'id' => $subCounty->id,
-        'name' => $subCounty->name,
-    ],
+        'delivered_schools' => $deliveredSchools,
 
-    'items' => $items->map(function ($item) {
+        'partial_schools' => $partialSchools,
 
-        return [
+        'pending_schools' => $pendingSchools,
 
-            'id' => $item->id,
+        'school_progress' => $schoolProgress,
 
-            'status' => $item->status,
+        // Book Progress
+        'allocated_books' => $totalAllocatedBooks,
 
-            'delivered_at' => $item->delivered_at,
+        'received_books' => $totalReceivedBooks,
 
-            'remarks' => $item->remarks,
+        'damaged_books' => $totalDamagedBooks,
 
-            'receiver_name' => $item->receiver_name,
+        'missing_books' => max(
+            0,
+            $totalAllocatedBooks - $totalReceivedBooks
+        ),
 
-            'receiver_phone' => $item->receiver_phone,
-
-            'assigned_to' => $item->assigned_to,
-
-            'assigned_by' => $item->assigned_by,
-
-            'assigned_at' => $item->assigned_at,
-
-            'school' => [
-
-                'id' => $item->school->id,
-
-                'school_name' => $item->school->school_name,
-
-                'uic' => $item->school->uic,
-
-                'sub_county' => $item->school->subCounty?->name,
-
-                'sub_county_id' => $item->school->sub_county_id,
-
-            ],
-
-        ];
-
-    })->values(),
-
-],
-
-        'stats' => [
-
-        'total' => $total,
-
-        'delivered' => $delivered,
-
-        'partial' => $partial,
-
-        'pending' => $pending,
-
-        'progress' => $total
-            ? round(($delivered / $total) * 100)
-            : 0,
+        'book_progress' => $bookProgress,
 
     ],
 
-    ]);
+]);
 }
 
 public function verifyDelivery(DispatchItem $dispatchItem)
@@ -1157,7 +1203,9 @@ $dispatches = Dispatch::select('id', 'dispatch_number', 'county_id', 'created_at
         ->orderBy('sub_counties.name')
         ->get();
 
-    $formattedSubCounties = $subCounties->map(function ($row) {
+    $formattedSubCounties = $subCounties
+    ->map(function ($row) {
+
         $dispatched = (float) $row->dispatched;
         $received = (float) $row->received;
         $variance = (float) $row->variance;
@@ -1175,8 +1223,10 @@ $dispatches = Dispatch::select('id', 'dispatch_number', 'county_id', 'created_at
             'variance' => $variance,
             'percentage' => $percentage,
         ];
-    });
-
+    })
+    ->sortBy('percentage')
+    ->values();
+    
     $totals = [
         'schools' => $formattedSubCounties->sum('schools'),
         'dispatched' => $formattedSubCounties->sum('dispatched'),
@@ -1231,5 +1281,133 @@ public function reopenSchool(DispatchItem $dispatchItem)
     }
 
     return back()->with('success', 'School delivery has been reopened successfully.');
+    }
+
+    public function subCountyPdf(Dispatch $dispatch, SubCounty $subCounty)
+{
+    $assignment = $dispatch->assignments()
+        ->with('fieldAgent')
+        ->where('sub_county_id', $subCounty->id)
+        ->first();
+
+    if (!$assignment) {
+        abort(404, 'Sub County assignment not found.');
+    }
+
+    $items = DispatchItem::with([
+        'school',
+        'school.subCounty',
+        'books.book',
+    ])
+    ->where('dispatch_id', $dispatch->id)
+    ->whereHas('school', function ($query) use ($subCounty) {
+        $query->where('sub_county_id', $subCounty->id);
+    })
+    ->get();
+
+    /*
+    |--------------------------------------------------------------------------
+    | SCHOOL STATISTICS
+    |--------------------------------------------------------------------------
+    */
+
+    $totalSchools = $items->count();
+
+    $deliveredSchools = $items->where('status', 'Delivered')->count();
+
+    $partialSchools = $items->where('status', 'Partial')->count();
+
+    $pendingSchools = $items->where('status', 'Pending')->count();
+
+    $schoolProgress = $totalSchools > 0
+        ? round(($deliveredSchools / $totalSchools) * 100, 1)
+        : 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | BOOK STATISTICS
+    |--------------------------------------------------------------------------
+    */
+
+    $totalTitles = 0;
+
+    $allocatedBooks = 0;
+
+    $receivedBooks = 0;
+
+    $damagedBooks = 0;
+
+    $missingBooks = 0;
+
+    foreach ($items as $item) {
+
+        foreach ($item->books as $book) {
+
+            $totalTitles++;
+
+            $allocatedBooks += $book->allocated_quantity;
+
+            $receivedBooks += $book->received_quantity;
+
+            $damagedBooks += $book->damaged_quantity;
+
+            $missingBooks += max(
+                0,
+                $book->allocated_quantity - $book->received_quantity
+            );
+        }
+    }
+
+    $bookProgress = $allocatedBooks > 0
+        ? round(($receivedBooks / $allocatedBooks) * 100, 1)
+        : 0;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDF
+    |--------------------------------------------------------------------------
+    */
+
+    $pdf = Pdf::loadView('pdf.subcounty-dispatch', [
+
+        'dispatch' => $dispatch,
+
+        'assignment' => $assignment,
+
+        'subCounty' => $subCounty,
+
+        'items' => $items,
+
+        'summary' => [
+
+            // School Summary
+            'total_schools' => $totalSchools,
+            'delivered_schools' => $deliveredSchools,
+            'partial_schools' => $partialSchools,
+            'pending_schools' => $pendingSchools,
+            'school_progress' => $schoolProgress,
+
+            // Book Summary
+            'book_titles' => $totalTitles,
+            'allocated_books' => $allocatedBooks,
+            'received_books' => $receivedBooks,
+            'missing_books' => $missingBooks,
+            'damaged_books' => $damagedBooks,
+            'book_progress' => $bookProgress,
+
+        ],
+
+    ])->setPaper('a4', 'portrait');
+
+    return $pdf->download(
+        sprintf(
+            'Dispatch_%s_%s_%s.pdf',
+            $dispatch->dispatch_number,
+            str_replace(' ', '_', $dispatch->county->name),
+            str_replace(' ', '_', $subCounty->name)
+        )
+    );
 }
 }

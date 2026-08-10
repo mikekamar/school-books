@@ -68,7 +68,22 @@ Route::middleware('auth')->group(function () {
     '/dispatch-items/{dispatchItem}/reopen',
     [DispatchController::class, 'reopenSchool']
     )->name('dispatch-items.reopen');
-    
+
+    Route::middleware(['role:Store Manager'])
+    ->group(function () {
+
+        Route::get(
+            '/dispatches/{dispatch}/subcounty/{subCounty}/pdf',
+            [DispatchController::class, 'subCountyPdf']
+        )->name('dispatches.subcounty.pdf');
+
+         Route::get(
+    '/reports/subcounty-progress/{county}/pdf',
+    [ReportController::class, 'subCountyProgressPdf']
+)->name('reports.subcounty-progress.pdf');
+
+    });
+
     Route::prefix('reports')->name('reports.')->group(function () {
 
         Route::get('/delivery-summary', [ReportController::class, 'deliverySummary'])
@@ -88,6 +103,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/schools/{school}', [ReportController::class, 'school'])
             ->name('school');
+
 
     });
 

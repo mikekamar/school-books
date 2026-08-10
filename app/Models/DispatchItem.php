@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\DispatchItemBook;
 
 class DispatchItem extends Model
 {
@@ -46,8 +47,14 @@ class DispatchItem extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function books()
+
+
+public function books()
 {
-    return $this->hasMany(DispatchItemBook::class);
+    return $this->hasMany(
+        DispatchItemBook::class,
+        'dispatch_item_id',
+        'id'
+    );
 }
 }
