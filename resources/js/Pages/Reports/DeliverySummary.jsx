@@ -5,7 +5,7 @@ import { Head } from "@inertiajs/react";
 export default function DeliverySummary({ stats }) {
     return (
         <AuthenticatedLayout>
-            <Head title="Delivery Summary" />
+            <Head title="Countrywide Summary" />
             <div className="space-y-10">
 
     {/* School Summary */}

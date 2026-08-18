@@ -270,7 +270,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                     }`}>
 
                     <div className="text-gray-500">
-                        Delivered
+                        Delivered Schools
                     </div>
 
                     <div className="text-3xl font-bold text-white-600">
@@ -288,7 +288,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                     }`}>
 
                     <div className="text-gray-500">
-                        Partial
+                        Partial Schools
                     </div>
 
                     <div className="text-3xl font-bold text-yellow-500">
@@ -308,7 +308,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                         }`}
                 >
 
-                    <div>Pending</div>
+                    <div>Pending Schools</div>
 
                     <div className="text-3xl font-bold">
 
@@ -322,7 +322,7 @@ export default function SubCountyDispatch({ dispatch, stats }) {
                 <div className="bg-white shadow rounded p-4">
 
                     <div className="text-gray-500">
-                        Progress
+                        School Progress
                     </div>
 
                     <div className="text-3xl font-bold text-blue-600">

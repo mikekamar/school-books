@@ -267,7 +267,7 @@ can('view reports') && (
                 hover:text-white
                 "
             >
-                📈 Delivery Summary
+                📈 CountryWide Progress
             </Link>
 
             <Link
