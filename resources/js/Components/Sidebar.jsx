@@ -140,6 +140,38 @@ hover:bg-slate-800
 }
 
 {
+can('import schools') && (
+
+<Link
+href={route('trucks.index')}
+className="
+block px-4 py-3 rounded-lg
+hover:bg-slate-800
+"
+>
+🏫 Trucks
+</Link>
+
+)
+}
+
+{
+can('import schools') && (
+
+<Link
+ href={route('drivers.index')}
+className="
+block px-4 py-3 rounded-lg
+hover:bg-slate-800
+"
+>
+🏫 Drivers
+</Link>
+
+)
+}
+
+{
 can('view stock') && (
 
 <Link

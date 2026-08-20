@@ -9,6 +9,8 @@ use App\Http\Controllers\SchoolImportController;
 use App\Http\Controllers\DispatchController;
 use App\Http\Controllers\ReportController;
 use App\Models\DispatchItemBook;
+use App\Http\Controllers\TruckController;
+use App\Http\Controllers\DriverController;
 use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
@@ -56,6 +58,20 @@ Route::middleware('auth')->group(function () {
     '/dispatches/{dispatch}/sub-counties/{subCounty}/shortages',
     [DispatchController::class, 'subCountyShortages']
     )->name('dispatches.subcounty.shortages');
+
+    Route::resource('trucks', TruckController::class);
+
+    Route::patch(
+        '/trucks/{truck}/status',
+        [TruckController::class, 'updateStatus']
+    )->name('trucks.status');
+
+    Route::resource('drivers', DriverController::class);
+
+    Route::patch(
+        '/drivers/{driver}/status',
+        [DriverController::class, 'updateStatus']
+    )->name('drivers.status');
 
     Route::middleware(['role:Admin|Store Manager'])->group(function () {
 

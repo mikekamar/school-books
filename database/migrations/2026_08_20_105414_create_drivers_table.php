@@ -8,21 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('trucks', function (Blueprint $table) {
+        Schema::create('drivers', function (Blueprint $table) {
             $table->id();
 
-            $table->string('registration_number')->unique();
+            $table->string('name');
 
-            $table->string('make')->nullable();
-            $table->string('model')->nullable();
+            $table->string('phone')->nullable();
 
-            // Approximate carrying capacity
-            $table->unsignedInteger('capacity')->nullable();
+            $table->string('license_number')->unique();
+
+            $table->date('license_expiry')->nullable();
 
             $table->enum('status', [
                 'available',
                 'assigned',
-                'maintenance',
                 'inactive',
             ])->default('available');
 
@@ -34,6 +33,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('trucks');
+        Schema::dropIfExists('drivers');
     }
 };

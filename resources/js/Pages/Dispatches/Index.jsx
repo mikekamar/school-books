@@ -76,149 +76,189 @@ export default function Index({ auth, dispatches, stats }) {
 
                         <div className="overflow-x-auto">
 
-                            <table className="min-w-full divide-y divide-gray-200">
+    <table className="min-w-full divide-y divide-gray-200">
 
-                                <thead className="bg-gray-50">
+        <thead className="bg-gray-50">
 
-                                    <tr>
+            <tr>
 
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Dispatch No.
-                                        </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Dispatch No.
+                </th>
 
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            County
-                                        </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    County
+                </th>
 
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Field Agent
-                                        </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Truck
+                </th>
 
-                                        <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Delivered
-                                        </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Driver
+                </th>
 
-                                        <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Status
-                                        </th>
+                <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Delivered
+                </th>
 
-                                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Dispatch Date
-                                        </th>
+                <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Status
+                </th>
 
-                                        <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                            Actions
-                                        </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Dispatch Date
+                </th>
 
-                                    </tr>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    Actions
+                </th>
 
-                                </thead>
+            </tr>
 
-                                <tbody className="divide-y divide-gray-200 bg-white">
+        </thead>
 
-                                    {dispatches.data.length === 0 ? (
+        <tbody className="divide-y divide-gray-200 bg-white">
 
-                                        <tr>
+            {dispatches.data.length === 0 ? (
 
-                                            <td
-                                                colSpan="8"
-                                                className="px-6 py-12 text-center text-gray-500"
-                                            >
-                                                No dispatches found.
-                                            </td>
+                <tr>
 
-                                        </tr>
+                    <td
+                        colSpan="9"
+                        className="px-6 py-12 text-center text-gray-500"
+                    >
+                        No dispatches found.
+                    </td>
 
-                                    ) : (
+                </tr>
 
-                                        dispatches.data.map((dispatch) => (
+            ) : (
 
-                                            <tr
-                                                key={dispatch.id}
-                                                className="hover:bg-gray-50"
-                                            >
+                dispatches.data.map((dispatch) => (
 
-                                                <td className="whitespace-nowrap px-6 py-4 font-semibold text-indigo-600">
+                    <tr
+                        key={dispatch.id}
+                        className="hover:bg-gray-50"
+                    >
 
-                                                    {dispatch.dispatch_number}
+                        {/* Dispatch Number */}
+                        <td className="whitespace-nowrap px-6 py-4 font-semibold text-indigo-600">
 
-                                                </td>
+                            {dispatch.dispatch_number}
 
-                                                <td className="whitespace-nowrap px-6 py-4">
+                        </td>
 
-                                                    {dispatch.county}
 
-                                                </td>
+                        {/* County */}
+                        <td className="whitespace-nowrap px-6 py-4">
 
-                                                <td className="whitespace-nowrap px-6 py-4">
+                            {dispatch.county}
 
-                                                    {dispatch.field_agent}
+                        </td>
 
-                                                </td>
-                                                
-                                                <td className="whitespace-nowrap px-6 py-4 text-center">
 
-                                                    {dispatch.delivered} / {dispatch.schools}
+                        {/* Truck */}
+                        <td className="whitespace-nowrap px-6 py-4">
 
-                                                </td>
+                            <div className="font-medium text-gray-800">
+                                {dispatch.truck ?? '-'}
+                            </div>
 
-                                                <td className="whitespace-nowrap px-6 py-4 text-center">
+                        </td>
 
-                                                    <StatusBadge
-                                                        status={dispatch.status}
-                                                    />
 
-                                                </td>
+                        {/* Driver */}
+                        <td className="whitespace-nowrap px-6 py-4">
 
-                                                <td className="whitespace-nowrap px-6 py-4">
+                            <div className="font-medium text-gray-800">
+                                {dispatch.driver ?? '-'}
+                            </div>
 
-                                                    {dispatch.dispatch_date}
+                        </td>
+                        
 
-                                                </td>
+                        {/* Delivery Progress */}
+                        <td className="whitespace-nowrap px-6 py-4 text-center">
 
-                                                <td className="whitespace-nowrap px-6 py-4">
+                            <span className="font-semibold text-gray-700">
+                                {dispatch.delivered}
+                            </span>
 
-                                                    <div className="flex justify-end gap-2">
+                            <span className="text-gray-400">
+                                {' / '}
+                            </span>
 
-                                                        <Link
-                                                            href={route(
-                                                                "dispatches.show",
-                                                                dispatch.id
-                                                            )}
-                                                            className="rounded bg-indigo-100 px-3 py-1 text-sm text-indigo-700 hover:bg-indigo-200"
-                                                        >
-                                                            View
-                                                        </Link>
+                            <span className="text-gray-600">
+                                {dispatch.schools}
+                            </span>
 
-                                                        {dispatch.status === "Pending" && (
+                        </td>
 
-                                                            <Link
-                                                                href={route(
-                                                                    "dispatches.edit",
-                                                                    dispatch.id
-                                                                )}
-                                                                className="rounded bg-yellow-100 px-3 py-1 text-sm text-yellow-700 hover:bg-yellow-200"
-                                                            >
-                                                                Edit
-                                                            </Link>
 
-                                                        )}
+                        {/* Status */}
+                        <td className="whitespace-nowrap px-6 py-4 text-center">
 
-                                                    </div>
+                            <StatusBadge
+                                status={dispatch.status}
+                            />
 
-                                                </td>
+                        </td>
 
-                                            </tr>
 
-                                        ))
+                        {/* Dispatch Date */}
+                        <td className="whitespace-nowrap px-6 py-4">
 
+                            {dispatch.dispatch_date}
+
+                        </td>
+
+
+                        {/* Actions */}
+                        <td className="whitespace-nowrap px-6 py-4">
+
+                            <div className="flex justify-end gap-2">
+
+                                <Link
+                                    href={route(
+                                        "dispatches.show",
+                                        dispatch.id
                                     )}
+                                    className="rounded bg-indigo-100 px-3 py-1 text-sm text-indigo-700 hover:bg-indigo-200"
+                                >
+                                    View
+                                </Link>
 
-                                </tbody>
 
-                            </table>
+                                {dispatch.status === "Pending" && (
 
-                        </div>
+                                    <Link
+                                        href={route(
+                                            "dispatches.edit",
+                                            dispatch.id
+                                        )}
+                                        className="rounded bg-yellow-100 px-3 py-1 text-sm text-yellow-700 hover:bg-yellow-200"
+                                    >
+                                        Edit
+                                    </Link>
+
+                                )}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                ))
+
+            )}
+
+        </tbody>
+
+    </table>
+
+</div>
 
                         {/* Pagination Placeholder */}
 

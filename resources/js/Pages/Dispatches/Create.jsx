@@ -6,12 +6,15 @@ export default function Create({
     auth,
     counties,
     fieldAgents,
+    trucks,
     drivers,
 }) {
 
     const { data, setData, post, processing, errors } = useForm({
 
         county_id: "",
+
+        truck_id: "",
 
         driver_id: "",
 
@@ -302,47 +305,76 @@ console.log(data);
                                     {/* Driver */}
 
                                     <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Truck *
+                                        </label>
 
-                                        <label className="mb-2 block text-sm font-medium">
+                                        <select
+                                            value={data.truck_id}
+                                            onChange={(e) =>
+                                                setData('truck_id', e.target.value)
+                                            }
+                                            className="w-full border-gray-300 rounded-lg"
+                                        >
+                                            <option value="">
+                                                Select Truck
+                                            </option>
 
-                                            Driver
+                                            {trucks.map((truck) => (
+                                                <option
+                                                    key={truck.id}
+                                                    value={truck.id}
+                                                >
+                                                    {truck.registration_number}
+                                                    {truck.make
+                                                        ? ` - ${truck.make} ${truck.model ?? ''}`
+                                                        : ''}
+                                                </option>
+                                            ))}
+                                        </select>
 
+                                        {errors.truck_id && (
+                                            <p className="text-red-600 text-sm mt-1">
+                                                {errors.truck_id}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Driver *
                                         </label>
 
                                         <select
                                             value={data.driver_id}
                                             onChange={(e) =>
-                                                setData(
-                                                    "driver_id",
-                                                    e.target.value
-                                                )
+                                                setData('driver_id', e.target.value)
                                             }
-                                            className="w-full rounded-lg border-gray-300"
+                                            className="w-full border-gray-300 rounded-lg"
                                         >
-
                                             <option value="">
-
                                                 Select Driver
-
                                             </option>
 
-                                            {drivers.map(driver => (
-
+                                            {drivers.map((driver) => (
                                                 <option
                                                     key={driver.id}
                                                     value={driver.id}
                                                 >
-
                                                     {driver.name}
-
+                                                    {driver.phone
+                                                        ? ` - ${driver.phone}`
+                                                        : ''}
                                                 </option>
-
                                             ))}
-
                                         </select>
 
+                                        {errors.driver_id && (
+                                            <p className="text-red-600 text-sm mt-1">
+                                                {errors.driver_id}
+                                            </p>
+                                        )}
                                     </div>
-
 
                                     
                                     {/* Remarks */}

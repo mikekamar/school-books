@@ -1,5 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import { useMemo, useState } from "react";
 
 export default function Show({
@@ -113,26 +113,31 @@ const filteredSubCounties = useMemo(() => {
 
     return (
 
-        <AuthenticatedLayout
-            user={auth.user}
-            header={
-                <div className="flex items-center justify-between">
-
+        <AuthenticatedLayout>
+            
+                <div className="flex items-center justify-between mb-6">
+                    {/* Left side */}
                     <div>
+                        <h1 className="text-2xl font-bold text-gray-800">
+                            Dispatch Details
+                        </h1>
 
-                        <h2 className="text-2xl font-bold text-gray-800">
-                            Dispatch Monitoring
-                        </h2>
-
-                        <p className="text-sm text-gray-500">
+                        <p className="mt-1 text-sm text-gray-500">
                             {dispatch.dispatch_number}
                         </p>
-
                     </div>
 
+                    {/* Right side */}
+                    <Link
+                        href={route('dispatches.index')}
+                        className="inline-flex items-center gap-2 px-4 py-2 
+                                bg-gray-600 text-white rounded-lg 
+                                hover:bg-gray-700 transition"
+                    >
+                        ← Back
+                    </Link>
                 </div>
-            }
-        >
+        
 
             <Head title={dispatch.dispatch_number} />
 

@@ -8,6 +8,7 @@ use App\Models\DispatchItem;
 use App\Models\County;
 use App\Models\subCounty;
 use App\Models\Dispatch;
+use App\Models\Truck;
 use App\models\DispatchItemBook;
 
 class Dispatch extends Model
@@ -16,6 +17,7 @@ protected $fillable = [
     'dispatch_number',
     'county_id',
     'driver_id',
+    'truck_id',
     'created_by',
     'dispatch_date',
     'remarks',
@@ -39,7 +41,7 @@ protected $fillable = [
 
    public function driver()
     {
-        return $this->belongsTo(User::class, 'driver_id');
+        return $this->belongsTo(Driver::class);
     }
 
     public function assignments()
@@ -65,5 +67,10 @@ protected $fillable = [
     public function books()
     {
         return $this->hasMany(DispatchItemBook::class);
+    }
+
+    public function truck()
+    {
+        return $this->belongsTo(Truck::class);
     }
 }

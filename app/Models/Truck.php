@@ -6,16 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Truck extends Model
 {
-    //
-}
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-class Truck extends Model
-{
     protected $fillable = [
         'registration_number',
         'make',
@@ -30,9 +20,14 @@ class Truck extends Model
         return $this->hasMany(Dispatch::class);
     }
 
-    public function activeDispatch()
+    public function hasActiveDispatch(): bool
     {
-        return $this->hasOne(Dispatch::class)
-            ->whereIn('status', ['Pending', 'In Transit']);
+        return $this->dispatches()
+            ->whereIn('status', [
+                'assigned',
+                'dispatched',
+                'in_transit',
+            ])
+            ->exists();
     }
 }
